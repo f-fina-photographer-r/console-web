@@ -72,7 +72,7 @@ if (typeof document !== "undefined" && typeof window !== "undefined" && window.C
 
   function signedOut(why) {
     Shell.clearSession(store);
-    el("app").hidden = true; el("signin").hidden = false; el("who").textContent = "";
+    el("app").hidden = true; el("signin").hidden = false; el("session").hidden = true; el("who").textContent = "";
     if (why) say(why, "error");
   }
   function show(nodes) {
@@ -83,7 +83,7 @@ if (typeof document !== "undefined" && typeof window !== "undefined" && window.C
   function load() {
     var s = Shell.readSession(store, Date.now());
     if (!s) return signedOut();
-    el("signin").hidden = true; el("app").hidden = false; el("who").textContent = s.email;
+    el("signin").hidden = true; el("app").hidden = false; el("session").hidden = false; el("who").textContent = s.email;
     say("讀取中…");
     fetch(cfg.api, Shell.request("viewParts", s.token, []))
       .then(function (r) { return r.text(); })
