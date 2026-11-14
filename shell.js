@@ -1,12 +1,10 @@
-// The ops console's static page (手機登入 PR 2): signs in with Google, asks the console's Apps
-// Script for viewParts through doPost, and swaps the read-only parts of its answer in. The pure
+// The ops console's static page (手機登入 PR 2, 3): signs in with Google, asks the console's Apps
+// Script for viewParts through doPost, and shows the whole page it answers; the page's own script
+// (client.js) then runs with ConsoleRun standing in for the Apps Script page's run object. The pure
 // functions below (session, request, parts) run in node for tests/console_web.test.js; the browser
 // wiring at the end only runs where there is a document.
 var Shell = (function () {
   var KEY = "console.session";
-  // The home page, read-only, in the order that was agreed: 待確認, today and the week, then the numbers.
-  var PARTS = ["next", "todo", "days", "week", "hours", "fixed"];
-
   // The session token is "v1|email|sub|expiry|signature" (backend/login.js); only the expiry is read
   // here, to avoid asking with a token that is already dead. The server checks all of it again.
   function readSession(store, now) {
@@ -39,13 +37,13 @@ var Shell = (function () {
     return { bad: msg === "登入失敗或未登入", error: msg };
   }
 
-  // The nodes of the wanted data-live parts, in PARTS order, from the server's whole page. Scripts
-  // and inline handlers never come across: this page only shows.
+  // Everything inside the server page's <main> except its own heading (this page has one) and scripts,
+  // in page order. Scripts and inline handlers never come across: the page's behaviour is client.js,
+  // cut from the same app.js, which wires the forms and buttons itself.
   function parts(doc) {
-    var out = [];
-    PARTS.forEach(function (name) {
-      var node = doc.querySelector('[data-live="' + name + '"]');
-      if (!node) return;
+    var main = doc.querySelector("main");
+    if (!main) return [];
+    return [].slice.call(main.children).filter(function (n) { return !/^(h1|script)$/i.test(n.tagName); }).map(function (node) {
       var copy = node.cloneNode(true);
       [].slice.call(copy.querySelectorAll("script,iframe,object,embed")).forEach(function (x) { x.remove(); });
       [copy].concat([].slice.call(copy.querySelectorAll("*"))).forEach(function (x) {
@@ -53,12 +51,11 @@ var Shell = (function () {
           if (/^on/i.test(a.name) || (/^(href|src|action)$/i.test(a.name) && /^\s*javascript:/i.test(a.value))) x.removeAttribute(a.name);
         });
       });
-      out.push(copy);
+      return copy;
     });
-    return out;
   }
 
-  return { KEY: KEY, PARTS: PARTS, readSession: readSession, saveSession: saveSession, clearSession: clearSession,
+  return { KEY: KEY, readSession: readSession, saveSession: saveSession, clearSession: clearSession,
            request: request, loginRequest: loginRequest, answer: answer, parts: parts };
 })();
 
@@ -73,8 +70,32 @@ if (typeof document !== "undefined" && typeof window !== "undefined" && window.C
   function signedOut(why) {
     Shell.clearSession(store);
     el("app").hidden = true; el("signin").hidden = false; el("session").hidden = true; el("who").textContent = "";
+    el("root").textContent = "";
     if (why) say(why, "error");
   }
+  // The Apps Script page's run object, for client.js: the same chain (withSuccessHandler / withFailureHandler / the call
+  // by name), answered by a doPost fetch with the session token. The server names the allowed calls
+  // (CALLS in app.js); anything else comes back as an error, so the name is not filtered here.
+  function runner(ok, bad) {
+    var base = { withSuccessHandler: function (f) { return runner(f, bad); }, withFailureHandler: function (f) { return runner(ok, f); } };
+    return new Proxy(base, { get: function (t, name) {
+      return t[name] || function (arg) { call(String(name), arg, ok, bad); };
+    } });
+  }
+  function call(name, arg, ok, bad) {
+    var s = Shell.readSession(store, Date.now()), gone = function () { signedOut("請重新登入"); bad(new Error("請重新登入")); };
+    if (!s) return gone();
+    fetch(cfg.api, Shell.request(name, s.token, arg))
+      .then(function (r) { return r.text(); })
+      .then(function (t) {
+        var a = Shell.answer(t);
+        if (a.bad) return gone();
+        if (a.error) return bad(new Error(a.error));
+        ok(a.result);
+      })
+      .catch(function () { bad(new Error("連不上中控台，請稍後再試")); });
+  }
+  window.ConsoleRun = runner(function () {}, function () {});
   function show(nodes) {
     var root = el("root");
     root.textContent = "";
@@ -93,6 +114,8 @@ if (typeof document !== "undefined" && typeof window !== "undefined" && window.C
         if (a.error) return say("讀取失敗：" + a.error, "error");
         show(Shell.parts(new DOMParser().parseFromString(a.result.html, "text/html")));
         say("");
+        // Once per page load (signing in reloads the page), so its document-level listeners are added once.
+        if (window.runConsoleClient) window.runConsoleClient();
       })
       .catch(function () { say("連不上中控台，請稍後再試", "error"); });
   }
@@ -104,7 +127,7 @@ if (typeof document !== "undefined" && typeof window !== "undefined" && window.C
         var a = Shell.answer(t);
         if (a.error) return say(a.error === "登入失敗或未登入" ? "這個帳號不能登入" : a.error, "error");
         Shell.saveSession(store, a.result.token);
-        load();
+        window.location.reload();
       })
       .catch(function () { say("連不上中控台，請稍後再試", "error"); });
   }
