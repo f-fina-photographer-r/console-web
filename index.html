@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- Only this origin's files, Google's sign-in, and the console's own Apps Script may load or be called. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' https://accounts.google.com/gsi/client; style-src 'self' https://accounts.google.com/gsi/style; frame-src https://accounts.google.com/gsi/; connect-src https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; img-src 'self' data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>中控台</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="page.css">
+</head>
+<body>
+<main>
+  <header class="bar"><h1>中控台</h1><span><span id="who" class="muted"></span> <button id="logout" type="button">登出</button></span></header>
+  <p id="status" class="muted" role="status"></p>
+  <section id="signin"><p>只限本人。請用 Google 帳號登入。</p><div id="gbutton"></div></section>
+  <section id="app" hidden><div id="root"></div></section>
+</main>
+<script src="config.js"></script>
+<script src="shell.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+</html>

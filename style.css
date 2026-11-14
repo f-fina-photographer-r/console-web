@@ -1,0 +1,379 @@
+/* "A story in the darkroom": quiet, narrative, close. Pure black page, fixed left sidebar, one serif
+   face at one weight, monochrome (red only for errors). Pale work sets use the .light palette.
+   Rules checked by tests/test_site.py (StyleTest): colours, font sizes, spacing and motion come only
+   from the variables below; every pair used for text keeps 4.5:1 contrast; motion stops under
+   prefers-reduced-motion. */
+
+
+:root {
+  color-scheme: dark; /* dark scrollbars and form controls */
+  --bg: #000000;
+  --side: #0A0A0A;
+  --card: #1C1C1C;
+  --band: #333333;
+  --text: #EAE6DF;
+  --muted: #A39E96;
+  --gold: #C9AF7A; /* champagne, user's pick 2026-11-03; same hue as the light palette's */
+  --accent: var(--gold);
+  --on-accent: #000000;
+  --link: var(--gold);
+  --focus: var(--gold);
+  --error: #FF8A80;
+  --on-photo: #FFFFFF;
+  --shade: rgb(0 0 0 / 0.75);
+  --backdrop: rgb(0 0 0 / 0.92);
+  --serif: "Fina Serif", "Noto Serif TC", "Source Han Serif TC", "Songti TC", "PMingLiU", serif;
+  /* Four sizes only: small print, body, section titles, page titles. */
+  --fs-s: 0.875rem;
+  --fs-m: 1rem;
+  --fs-l: 1.375rem;
+  --fs-xl: 2rem;
+  --lh: 1.8;
+  --lh-tight: 1.4;
+  --measure: 40em; /* about 40 Chinese characters a line */
+  /* Spacing is whole steps of 8px; blocks are 32px apart inside a section, 64px between sections. */
+  --space: 8px;
+  --group: calc(var(--space) * 4);
+  --block: calc(var(--space) * 8);
+  --sidebar: 240px;
+  --max: 1280px;
+  /* One easing for everything; 200ms for small changes, 400ms for photos and pages. */
+  --dur-1: 200ms;
+  --dur-2: 400ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+}
+
+.light {
+  color-scheme: light;
+  --bg: #F7F4EF;
+  --side: #F7F4EF;
+  --card: #FFFFFF;
+  --band: #E4DED4;
+  --text: #222222;
+  --muted: #666666;
+  --gold: #7E6534;
+  /* Restated: a var() is resolved where it is declared, so :root's would keep the dark gold. */
+  --accent: var(--gold);
+  --on-accent: #FFFFFF;
+  --link: var(--gold);
+  --focus: var(--text);
+  --error: #B00020;
+}
+
+/* Page changes cross-fade; the browser skips this where View Transitions are not supported. */
+@view-transition { navigation: auto; }
+::view-transition-group(root), ::view-transition-old(root), ::view-transition-new(root) {
+  animation-duration: var(--dur-1); animation-timing-function: var(--ease); }
+
+* { box-sizing: border-box; }
+html { background: var(--bg); color: var(--text); font-family: var(--serif); font-size: var(--fs-m);
+  line-height: var(--lh); font-weight: 400; font-synthesis: none; }
+body { margin: 0; background: var(--bg); padding-bottom: var(--block); }
+b, strong, th, summary, legend, label { font-weight: 400; }
+a { color: var(--link); text-underline-offset: 3px; }
+h1, h2, h3 { font-weight: 400; line-height: var(--lh-tight); letter-spacing: 0.05em; }
+h1 { font-size: var(--fs-xl); }
+.work-meta { font-size: var(--fs-l); margin-top: calc(var(--space) * -1); }  /* one size below h1 */
+h1:focus { outline: none; } /* focused by site.js after a page change, not a control */
+h2 { font-size: var(--fs-l); text-align: center; margin: var(--block) 0 var(--group); }
+h3 { font-size: var(--fs-m); }
+img { display: block; max-width: 100%; height: auto; }
+/* No line ends with one stranded character (朝馬站出／發) at any width; headings balance their lines. */
+p, li, dd, dt, small, label, legend, summary, td, th, .choice { text-wrap: pretty; }
+h1, h2, h3 { text-wrap: balance; }
+main, .site-footer { padding: 0 calc(var(--space) * 2); }
+section { margin: 0 0 var(--block); }
+.muted { color: var(--muted); }
+.price, .flow { font-variant-numeric: tabular-nums; }
+/* Photo sections run to the edges of the content area. */
+.bleed { margin-left: calc(var(--space) * -2); margin-right: calc(var(--space) * -2); }
+
+.skip { position: absolute; left: -9999px; }
+.skip:focus { left: var(--space); top: var(--space); background: var(--card); padding: var(--space); z-index: 10; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+.site-header { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--space) * 2); padding: calc(var(--space) * 2); background: var(--side); }
+.wordmark { color: var(--text); text-decoration: none; margin-right: auto; display: flex; flex-direction: column; line-height: 1; }
+/* The old site's logo image, used as a mask so it takes the palette's text colour on either theme. */
+.wordmark .logo { display: block; width: calc(var(--space) * 20); aspect-ratio: 624 / 328; background: var(--text);
+  mask: url(/static/logo.png) center / contain no-repeat; print-color-adjust: exact; }
+.site-header nav { display: flex; flex-wrap: wrap; align-items: center; gap: calc(var(--space) * 2); }
+.site-header nav a:not(.btn), .lang { color: var(--text); text-decoration: none; }
+.site-header nav a[aria-current] { text-decoration: underline var(--gold); }
+.site-footer { background: var(--card); padding-top: calc(var(--space) * 6); padding-bottom: calc(var(--space) * 6); display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: calc(var(--space) * 2); text-align: center; }
+.site-footer p { flex-basis: 100%; margin: 0; }
+
+/* Two kinds of button only: primary (light fill, one per screen) and secondary (outline). */
+.btn { display: inline-block; padding: var(--space) calc(var(--space) * 3); border: 1px solid var(--text); border-radius: 0; color: var(--text); text-decoration: none; background: transparent; font: inherit; letter-spacing: 0.1em; cursor: pointer; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.qr { margin: calc(var(--space) * 2) 0; }
+.qr svg { display: block; }  /* segno writes a fixed size and no viewBox */
+.qr[hidden] { display: none; }
+
+/* Home: the cover photo and the wordmark fade in, once; neither blocks input. */
+.hero { position: relative; margin-bottom: var(--block); }
+.hero img { width: 100%; height: 70vh; min-height: 420px; object-fit: cover; animation: fade-in var(--dur-2) var(--ease) both; }
+.home .wordmark .logo { animation: fade-in var(--dur-2) var(--ease) both; }
+@keyframes fade-in { from { opacity: 0; } }
+/* Below the picture, never over it (使用者 2026-11-04: the text covered the photo). */
+.hero-copy { max-width: 36rem; padding: calc(var(--space) * 2) calc(var(--space) * 3); }
+.hero-copy h1 { margin: 0 0 var(--space); }
+.hero-text .hero-copy { padding: var(--block) calc(var(--space) * 2); }
+
+/* Lists show every photo cropped to 2:3; work pages show them whole. No filters or zoom effects. */
+.grid { display: grid; gap: var(--space); grid-template-columns: repeat(3, 1fr); }
+.work-card { position: relative; display: block; overflow: hidden; color: var(--on-photo); text-decoration: none; }
+/* Covers are shown whole, never cropped (使用者 2026-11-04); a shorter card keeps to the top of its row. */
+.work-card { align-self: start; }
+.work-card img { width: 100%; height: auto; }
+.work-card span { position: absolute; left: 0; right: 0; bottom: 0; padding: var(--group) calc(var(--space) * 2) calc(var(--space) * 2); background: linear-gradient(transparent, var(--shade)); }
+
+/* Featured works as a film strip: one row, snapping frame by frame, the next frame showing at the edge. */
+.strip { display: grid; grid-auto-flow: column; grid-auto-columns: 40%; gap: var(--space); overflow-x: auto;
+  scroll-snap-type: x mandatory; overscroll-behavior-x: contain; padding-bottom: var(--space); }
+.strip .work-card { scroll-snap-align: start; }
+
+/* site.js hides photos still below the fold and fades each in as it scrolls into view. */
+.grid img, .strip img, .gallery img { transition: opacity var(--dur-2) var(--ease); }
+.grid img.waiting, .strip img.waiting, .gallery img.waiting { opacity: 0; }
+
+/* Plan cards: title band, price first and large, details as a short list. */
+/* Cards keep their own height. */
+.plan-list { display: grid; align-items: start; gap: var(--group); grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.card { background: var(--card); padding: calc(var(--space) * 3); text-align: center; }
+.card h2 { background: var(--band); font-size: var(--fs-l); margin: 0 0 calc(var(--space) * 2); padding: 0 var(--space); }
+.card ul { list-style: none; padding: 0; }
+.card .price { font-size: var(--fs-l); margin: var(--space) 0; }
+.card .price small { font-size: var(--fs-s); color: var(--muted); }
+.card ul.points { text-align: left; margin: calc(var(--space) * 2) 0 0; }
+.card ul.points li { padding: var(--space) 0 var(--space) calc(var(--space) * 2); border-top: 1px solid var(--band); position: relative; }
+.card ul.points li::before { content: "·"; position: absolute; left: 0; }
+
+.filters { display: flex; flex-wrap: wrap; gap: var(--space); margin-bottom: calc(var(--space) * 3); }
+.filters button { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--card); padding: 0 calc(var(--space) * 2); min-height: 44px; cursor: pointer; }
+.filters button[aria-pressed="true"], .filters button[aria-expanded="true"] { border-color: var(--text); }
+.filters.sub { margin-top: calc(var(--space) * -2); }  /* sits under the group row it belongs to */
+.filters.sub button { font-size: var(--fs-s); min-height: 36px; padding: 0 var(--space); background: none; }  /* smaller and outlined: options rank below their group */
+
+/* Two classes so the auto side margins outrank `.steps { margin: … 0 }` further down, which left the block flush left. */
+.steps.flow { max-width: 60rem; margin-left: auto; margin-right: auto; }
+.flow + p { text-align: center; }
+
+/* Justified rows: site.js sets each figure's flex-grow from the image's aspect ratio.
+   Without JS the gallery falls back to a plain grid. */
+.gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space); }
+.gallery.justified { display: flex; flex-wrap: wrap; }
+.gallery.justified::after { content: ""; flex-grow: 1000; }
+.gallery figure { margin: 0; }
+.gallery img { width: 100%; }
+
+dialog { max-width: 96vw; max-height: 96vh; padding: 0; border: 0; background: var(--bg); color: var(--text); text-align: center; }
+dialog::backdrop { background: var(--backdrop); }
+dialog img { width: 96vw; height: 80vh; object-fit: contain; margin: 0 auto; touch-action: pan-y pinch-zoom; }
+dialog .close { display: block; margin-left: auto; }
+dialog .controls { display: flex; align-items: center; justify-content: center; margin: 0; }
+dialog .count { color: var(--muted); font-size: var(--fs-s); font-variant-numeric: tabular-nums; }
+dialog button { font: inherit; margin: var(--space); color: var(--text); background: transparent; border: 1px solid var(--band); padding: var(--space) calc(var(--space) * 2); min-height: 44px; cursor: pointer; }
+
+/* Desktop: the header is a fixed left sidebar, nav right-aligned under the wordmark. */
+@media (min-width: 901px) {
+  .site-header { position: fixed; top: 0; bottom: 0; left: 0; width: var(--sidebar); flex-direction: column; align-items: flex-end; flex-wrap: nowrap; padding: calc(var(--space) * 6) var(--group); text-align: right; overflow-y: auto; }
+  .wordmark { margin: 0 0 var(--group); align-items: center; }
+  .site-header nav { flex-direction: column; align-items: flex-end; gap: var(--space); }
+  .site-header nav .btn { margin-top: var(--space); }
+  main, .site-footer { margin-left: var(--sidebar); }
+  main { max-width: calc(var(--max) + var(--sidebar)); }
+}
+
+.book-bar { display: none; }
+/* Floating menu button (site.js): phone and tablet only, quiet, top right, clear of the bottom booking bar. */
+.menu-fab, .menu-panel { display: none; }
+@media (max-width: 900px) {
+  .menu-fab:not([hidden]), .menu-panel:not([hidden]) { display: grid; position: fixed; right: var(--space); z-index: 20; border: 1px solid var(--band); }
+  .menu-fab { top: var(--space); place-items: center; width: 44px; height: 44px; color: var(--text);
+    background: color-mix(in srgb, var(--card) 80%, transparent); border-radius: 50%; }
+  .menu-fab::before { content: ""; width: calc(var(--space) * 2); height: 2px; background: currentColor; box-shadow: 0 calc(var(--space) * -1), 0 var(--space); }
+  .menu-panel { top: 56px; max-height: 70vh; overflow: auto; padding: calc(var(--space) * 2); background: var(--card); }
+  .menu-panel a { color: var(--text); text-decoration: none; padding: var(--space) 0; }
+  .grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 700px) {
+  .site-header nav .btn { display: none; }
+  /* Tabbing scrolls the focused field clear of the fixed booking bar (WCAG 2.4.11, technique C43). */
+  html { scroll-padding-bottom: calc(var(--block) + var(--space)); }
+  .book-bar { display: block; position: fixed; left: 0; right: 0; bottom: 0; padding: calc(var(--space) * 2); text-align: center; background: var(--accent); color: var(--on-accent); text-decoration: none; letter-spacing: 0.1em; }
+  .hero img { height: auto; min-height: 0; aspect-ratio: 4 / 5; }
+  .strip { grid-auto-columns: 80%; }
+}
+
+/* Booking form and status page. Large targets and one column: most people book on a phone. */
+[hidden] { display: none !important; }
+.booking { max-width: var(--measure); }
+.booking section { margin-bottom: calc(var(--space) * 6); }
+.booking h2 { text-align: left; }
+.field { margin: 0 0 calc(var(--space) * 3); padding: 0; border: 0; }
+.field label, .field legend { display: block; padding: 0; }
+.field small { display: block; color: var(--muted); font-size: var(--fs-s); }
+.field input:not([type="checkbox"]):not([type="radio"]), .field select, .field textarea {
+  width: 100%; min-height: 44px; margin-top: var(--space); padding: var(--space);
+  font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--muted); border-radius: 0; }
+.field [aria-invalid="true"] { border-color: var(--error); }
+.choices { display: grid; gap: var(--space); margin-top: var(--space); }
+.slots { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+/* Month calendar: open dates are buttons, solid when free, dashed when only the waiting list is left. */
+.calendar { max-width: 24rem; margin: var(--space) 0; }
+.calendar-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space); }
+.calendar-head p { margin: 0; }
+.calendar-head .btn:disabled { visibility: hidden; }
+.calendar table { width: 100%; border-collapse: collapse; table-layout: fixed; text-align: center; font-variant-numeric: tabular-nums; }
+.calendar th { color: var(--muted); font-size: var(--fs-s); font-weight: 400; }
+.calendar td { height: 44px; padding: calc(var(--space) / 4); color: var(--muted); }
+.calendar .day { width: 100%; height: 100%; padding: 0; font: inherit; color: var(--text); background: transparent; border: 1px solid var(--text); border-radius: 0; cursor: pointer; }
+.calendar .day.queue { border-style: dashed; }
+.calendar .day[aria-pressed="true"] { background: var(--accent); color: var(--on-accent); }
+.field .choice, .check { display: flex; align-items: center; gap: var(--space); min-height: 44px; cursor: pointer; }
+.choice input, .check input { width: 1.25rem; height: 1.25rem; flex: none; accent-color: var(--accent); }
+.error { color: var(--error); margin: 0; min-height: 0; }
+.error:empty { display: none; }
+.error a { color: inherit; }
+.quote table { width: 100%; border-collapse: collapse; }
+.quote th, .quote td { padding: var(--space) 0; border-bottom: 1px solid var(--band); text-align: left; }
+.quote td { text-align: right; font-variant-numeric: tabular-nums; }
+.quote h3 { margin-top: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: var(--space) calc(var(--space) * 2); }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; }
+.progress { display: flex; flex-wrap: wrap; gap: var(--space); padding: 0; list-style: none; }
+.progress li { padding: 0 var(--space); border: 1px solid var(--band); color: var(--muted); }
+.progress li.done { color: var(--text); }
+.progress li[aria-current] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
+.todo { color: var(--text); letter-spacing: 0.05em; }
+.card.booking, .cancel { text-align: left; margin: calc(var(--space) * 3) 0; }
+#status-app h2 { text-align: left; }
+
+/* Booking form waits for the backend; say so instead of showing a blank page. */
+.loading { padding: calc(var(--space) * 2); background: var(--card); color: var(--muted); }
+.loading::before { content: ""; display: inline-block; width: 0.9rem; height: 0.9rem; margin-right: var(--space); vertical-align: -0.1em;
+  border: 2px solid var(--muted); border-right-color: transparent; border-radius: 50%; animation: spin var(--dur-2) var(--ease) infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- Reading pages (guide, terms, about, privacy): one column of about 40 characters. ---- */
+.prose, .narrow { max-width: var(--measure); margin: 0 auto; }
+.prose h2 { text-align: left; margin: var(--block) 0 calc(var(--space) * 2);
+  padding-left: calc(var(--space) * 2); border-left: 3px solid var(--text); scroll-margin-top: calc(var(--space) * 2); }
+.prose h3 { margin: calc(var(--space) * 2) 0 0; color: var(--muted); letter-spacing: 0.05em; }
+.prose section { margin-bottom: var(--group); }
+.prose ul { padding-left: calc(var(--space) * 3); }
+.prose ul.chips, .prose ul.toc { padding-left: 0; }
+.lead { color: var(--muted); }
+
+/* In-page contents: chips that jump to each section. */
+.toc { display: flex; flex-wrap: wrap; gap: var(--space); margin: calc(var(--space) * 2) 0 var(--group); padding: 0; list-style: none; }
+.toc a, .chips li { display: inline-block; padding: 0 calc(var(--space) * 2); border: 1px solid var(--band); color: var(--text); text-decoration: none; font-size: var(--fs-s); }
+.toc a:hover { border-color: var(--text); }
+.chips { display: flex; flex-wrap: wrap; gap: var(--space); padding: 0; margin: var(--space) 0 calc(var(--space) * 2); list-style: none; }
+.chips.strong li { border-color: var(--text); }
+
+/* Numbered steps: a row on wide screens, a column on phones. */
+.steps { list-style: none; padding: 0; margin: calc(var(--space) * 3) 0; display: grid; gap: calc(var(--space) * 2);
+  grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); counter-reset: n; }
+.steps li { counter-increment: n; position: relative; padding: calc(var(--space) * 2); background: var(--card); }
+.steps li::before { content: counter(n); display: flex; align-items: center; justify-content: center; width: 2rem; height: 2rem;
+  margin-bottom: var(--space); border: 1px solid var(--text); border-radius: 50%; }
+.steps b { display: block; }
+.steps small { display: block; color: var(--muted); font-size: var(--fs-s); }
+
+/* Key numbers: big value, small label. */
+.stats { display: grid; gap: calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); margin: calc(var(--space) * 2) 0; }
+.stats div { padding: calc(var(--space) * 2); background: var(--card); text-align: center; }
+.stats strong { display: block; font-size: var(--fs-l); line-height: var(--lh-tight); font-variant-numeric: tabular-nums; }
+.stats span { color: var(--muted); font-size: var(--fs-s); }
+
+/* Side-by-side comparison (who pays what, do / do not). */
+.compare { display: grid; gap: calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin: calc(var(--space) * 2) 0; }
+.compare > div { padding: calc(var(--space) * 2) calc(var(--space) * 3); background: var(--card); border-top: 3px solid var(--text); }
+.compare > div.alt { border-top-color: var(--muted); }
+.compare h3, .prose .compare h3 { margin: 0 0 var(--space); color: var(--text); }
+.compare ul { margin: 0; padding-left: calc(var(--space) * 2); }
+
+.notice { margin: calc(var(--space) * 2) 0; padding: calc(var(--space) * 2) calc(var(--space) * 3); border: 1px solid var(--text); background: var(--card); }
+.notice strong:first-child { display: block; margin-bottom: var(--space); letter-spacing: 0.1em; }
+
+.data { width: 100%; border-collapse: collapse; margin: calc(var(--space) * 2) 0; font-variant-numeric: tabular-nums; }
+.data th, .data td { padding: var(--space) calc(var(--space) * 2); border-bottom: 1px solid var(--band); text-align: left; vertical-align: top; }
+.data thead th { color: var(--muted); font-size: var(--fs-s); }
+.data tbody th { white-space: nowrap; }
+.data caption { text-align: left; padding-bottom: var(--space); }
+
+/* Refund tiers: the bar shows the share of the deposit returned. */
+.bar { display: block; height: 0.6rem; margin-top: var(--space); background: var(--band); }
+.bar i { display: block; height: 100%; background: var(--text); }
+.bar .p100 { width: 100%; } .bar .p50 { width: 50%; } .bar .p33 { width: 33.3%; } .bar .p0 { width: 0; }
+
+.faq details { border-bottom: 1px solid var(--band); }
+.faq summary { cursor: pointer; padding: calc(var(--space) * 2) 0; list-style-position: outside; }
+.faq details p { margin: 0 0 calc(var(--space) * 2); }
+/* Booking: folded optional fields and the privacy summary share the FAQ's disclosure look. */
+.booking details { border-top: 1px solid var(--band); border-bottom: 1px solid var(--band); margin: 0 0 calc(var(--space) * 3); }
+.booking summary { cursor: pointer; padding: calc(var(--space) * 2) 0; min-height: 44px; }
+.booking details[open] { padding-bottom: var(--space); }
+/* What a number field adds to the price, right under it. */
+.field .addon { margin: calc(var(--space) / 2) 0 0; font-size: var(--fs-s); }
+.field .addon:empty { display: none; }
+/* Reference links and PDFs: one row each, the remove button beside it. */
+.ref-link, .ref-list li { display: flex; gap: var(--space); align-items: center; margin: 0 0 var(--space); }
+.ref-link input { flex: 1; min-width: 0; }
+.ref-list { list-style: none; padding: 0; margin: var(--space) 0 0; }
+.ref-list:empty { display: none; }
+.ref-list li { justify-content: space-between; overflow-wrap: anywhere; }
+
+/* Phones: steps stack with the number beside the text, so five steps stay short. */
+@media (max-width: 700px) {
+  .steps { grid-template-columns: 1fr; gap: var(--space); }
+  .steps li { display: grid; grid-template-columns: 2rem 1fr; column-gap: calc(var(--space) * 2); padding: calc(var(--space) * 2); }
+  .steps li::before { grid-row: span 2; margin: 0; }
+  .data tbody th { white-space: normal; }
+  /* Odd last stat: full row */
+  .stats > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  /* Label-and-text tables (no header row) read as a list on phones: a squeezed label column
+     wrapped 收什麼 one character per line. Tables with a header row keep their columns. */
+  .data:not(:has(thead)) tr, .data:not(:has(thead)) th, .data:not(:has(thead)) td { display: block; }
+  .data:not(:has(thead)) th { white-space: nowrap; border-bottom: 0; padding-bottom: 0; }
+}
+/* Wider screens: the home steps wrap as the width allows, and a short last row stays centred
+   (a fixed four-column grid left the fifth step alone at the left). */
+@media (min-width: 701px) {
+  .steps.flow { display: flex; flex-wrap: wrap; justify-content: center; }
+  .steps.flow li { flex: 1 1 12rem; max-width: 16rem; text-align: center; }  /* 4 a row at full width */
+  .steps.flow li::before { margin-left: auto; margin-right: auto; }
+}
+/* Inside the 40-character reading column five steps in one row are too narrow; wrap to three. */
+.prose .steps { grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+
+/* Forced colours (Windows contrast themes) drop backgrounds, so a chosen day, filter or step would
+   look like the rest; give those system highlight colours and give filled boxes an edge. */
+@media (forced-colors: active) {
+  .calendar .day[aria-pressed="true"], .filters button[aria-pressed="true"], .filters button[aria-expanded="true"],
+  .progress li[aria-current], .bar i {
+    forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
+  .card, .stats div, .steps li, .compare > div, .loading { outline: 1px solid CanvasText; }
+  .book-bar { border-top: 1px solid CanvasText; }
+  .wordmark .logo { forced-color-adjust: none; background: CanvasText; }
+}
+
+/* Print (the guide and terms get printed): the system's paper colours rather than a second palette,
+   only the wordmark from the header, no booking buttons or lightbox. */
+@media print {
+  :root, .light { color-scheme: light; --bg: Canvas; --side: Canvas; --card: Canvas; --band: CanvasText;
+    --text: CanvasText; --muted: CanvasText; --link: CanvasText; --accent: Canvas; --on-accent: CanvasText; }
+  .site-header { position: static; width: auto; padding: 0; }
+  main, .site-footer { margin-left: 0; max-width: none; }
+  .site-header nav, .lang, .site-footer, .book-bar, .menu-fab, .menu-panel, .btn, .skip, dialog { display: none !important; }
+}
+
+/* Reduced motion (and slow-refresh screens such as e-paper): no page fades, no photo fades, no wordmark or spinner motion. Keep this last. */
+@media (prefers-reduced-motion: reduce), (update: slow) {
+  @view-transition { navigation: none; }
+  *, *::before, *::after, ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) {
+    animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
