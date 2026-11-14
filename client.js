@@ -31,10 +31,10 @@ function client_() {
                                 days: picked("s-days"), start: timeVal("s-start"), end: timeVal("s-end"), until: dateVal("s-until") };
     if (m === "syllabus") return { mode: m, course: val("course"), week: val("y-week"), date: val("y-week") ? "" : dateVal("y-date"),
                                    title: val("y-title"), note: val("y-note") };
-    var all = on("f-allday"), days = picked("f-days");
+    var all = on("f-allday"), repeat = val("f-repeat"), days = repeat === "week" ? picked("f-days") : "";
     return { mode: "", title: val("f-title"), note: val("f-note"), date: dateVal("f-date"), allDay: all,
-             start: all ? "" : timeVal("f-start"), end: all ? "" : timeVal("f-end"), days: days,
-             until: all || days ? dateVal("f-until") : "", type: val("f-type"), place: val("f-place"), importance: picked("f-imp") };
+             start: all ? "" : timeVal("f-start"), end: all ? "" : timeVal("f-end"), repeat: repeat, days: days,
+             until: all || repeat ? dateVal("f-until") : "", type: val("f-type"), place: val("f-place"), importance: picked("f-imp") };
   }
   function key() { return JSON.stringify(fields()); }
   // What shows follows what is picked: the mode's fields; 一般's hours unless 全天 and its 迄日
@@ -43,7 +43,8 @@ function client_() {
     var m = mode();
     each("[data-mode]", function (x) { x.hidden = x.getAttribute("data-mode") !== m; });
     el("f-time").hidden = on("f-allday");
-    el("f-until").hidden = !on("f-allday") && !picked("f-days");
+    el("f-weekdays").hidden = val("f-repeat") !== "week";
+    el("f-until").hidden = !on("f-allday") && !val("f-repeat");
     el("y-date").hidden = !!val("y-week");
   }
   // A day past its month's end (2/30) goes to the month's last day, as Ops.dayOf does.
