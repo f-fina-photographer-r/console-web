@@ -139,7 +139,6 @@ section { margin: 0 0 var(--block); }
 
 /* Plan cards: title band, price first and large, details as a short list. */
 /* Cards keep their own height. */
-.plan-list { display: grid; align-items: start; gap: var(--group); grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 .card { background: var(--card); padding: calc(var(--space) * 3); text-align: center; }
 .card h2 { background: var(--band); font-size: var(--fs-l); margin: 0 0 calc(var(--space) * 2); padding: 0 var(--space); }
 .card ul { list-style: none; padding: 0; }
@@ -284,10 +283,6 @@ dialog button { font: inherit; margin: var(--space); color: var(--text); backgro
 .steps small { display: block; color: var(--muted); font-size: var(--fs-s); }
 
 /* Key numbers: big value, small label. */
-.stats { display: grid; gap: calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); margin: calc(var(--space) * 2) 0; }
-.stats div { padding: calc(var(--space) * 2); background: var(--card); text-align: center; }
-.stats strong { display: block; font-size: var(--fs-l); line-height: var(--lh-tight); font-variant-numeric: tabular-nums; }
-.stats span { color: var(--muted); font-size: var(--fs-s); }
 
 /* Side-by-side comparison (who pays what, do / do not). */
 .compare { display: grid; gap: calc(var(--space) * 2); grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); margin: calc(var(--space) * 2) 0; }
@@ -334,7 +329,6 @@ dialog button { font: inherit; margin: var(--space); color: var(--text); backgro
   .steps li::before { grid-row: span 2; margin: 0; }
   .data tbody th { white-space: normal; }
   /* Odd last stat: full row */
-  .stats > div:last-child:nth-child(odd) { grid-column: 1 / -1; }
   /* Label-and-text tables (no header row) read as a list on phones: a squeezed label column
      wrapped 收什麼 one character per line. Tables with a header row keep their columns. */
   .data:not(:has(thead)) tr, .data:not(:has(thead)) th, .data:not(:has(thead)) td { display: block; }
@@ -356,7 +350,7 @@ dialog button { font: inherit; margin: var(--space); color: var(--text); backgro
   .calendar .day[aria-pressed="true"], .filters button[aria-pressed="true"], .filters button[aria-expanded="true"],
   .progress li[aria-current], .bar i {
     forced-color-adjust: none; background: Highlight; color: HighlightText; border-color: Highlight; }
-  .card, .stats div, .steps li, .compare > div, .loading { outline: 1px solid CanvasText; }
+  .card, .steps li, .compare > div, .loading { outline: 1px solid CanvasText; }
   .book-bar { border-top: 1px solid CanvasText; }
   .wordmark .logo { forced-color-adjust: none; background: CanvasText; }
 }

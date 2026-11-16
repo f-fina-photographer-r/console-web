@@ -14,6 +14,45 @@ function client_() {
   var save = document.getElementById("save"), out = document.getElementById("result"), previewed = null, timer = 0, asked = "";
   function el(id) { return document.getElementById(id); }
   function each(q, fn) { Array.prototype.forEach.call(document.querySelectorAll(q), fn); }
+  // Tabs: the panels all stay in the page (a half-typed form and the live swaps survive a switch).
+  // A script error is shown at the top, and 按鈕未啟用 in the foot turns into 按鈕已啟用 only when this
+  // script ran to here: a dead button is then told apart from one that does nothing (2026-11-17).
+  window.onerror = function (m) { note([["error", "頁面錯誤：" + m]]); };
+  el("alive").textContent = "按鈕已啟用";
+  var wealthTimer = 0;
+  function wealthHide() {
+    clearTimeout(wealthTimer);
+    var l = el("wealth-line"), b = document.querySelector("[data-wealth]");
+    if (l) l.textContent = "";
+    if (b) b.textContent = "顯示金額";
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-wealth]");
+    if (!b) return;
+    if (el("wealth-line").textContent) return wealthHide();
+    server("viewWealth", [], function (r) {
+      el("wealth-line").textContent = r.line;
+      b.textContent = "遮蔽金額";
+      wealthTimer = setTimeout(wealthHide, 60000);
+    }, function (err) { el("wealth-line").textContent = "失敗：" + err.message; });
+  });
+  function showTab(name) {
+    wealthHide();
+    each("[data-panel]", function (p) { p.hidden = p.getAttribute("data-panel") !== name; });
+    each("[data-tab]", function (b) { if (b.getAttribute("data-tab") === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest && e.target.closest("[data-pick]");
+    if (!b) return;
+    var wrap = b.closest(".weekwrap");
+    wrap.querySelector(".week").setAttribute("data-sel", b.getAttribute("data-pick"));
+    [].forEach.call(wrap.querySelectorAll("[data-pick]"), function (x) { x.setAttribute("aria-current", x === b ? "true" : "false"); });
+  });
+  function showTabOf(node) { var p = node && node.closest && node.closest("[data-panel]"); if (p) showTab(p.getAttribute("data-panel")); }
+  each("[data-tab]", function (b) { b.onclick = function () { showTab(b.getAttribute("data-tab")); window.scrollTo(0, 0); }; });
+  // 新增日程 opens the form in a dialog; closing keeps what was typed until a write goes in.
+  el("add-open").onclick = function () { el("add").showModal(); };
+  el("add-close").onclick = function () { el("add").close(); };
   function mode() { return (document.querySelector('input[name="mode"]:checked') || {}).value || ""; }
   function val(id) { var x = el(id); return x ? x.value : ""; }
   function on(id) { return el(id).checked; }
@@ -69,6 +108,15 @@ function client_() {
       r.warnings.map(function (w) { return ["", "注意：" + w]; })));
   }
   function fail(err) { idle(); show([["error", "失敗：" + err.message]]); }
+  // The answer to a button on the page itself (待處理, 改): in the line at the top, not in the form's
+  // dialog, which is closed then (2026-11-16: the answers were written there and never seen).
+  function note(items) {
+    var n = el("notice");
+    n.textContent = "";
+    items.forEach(function (t) { var p = document.createElement("p"); p.className = t[0]; p.textContent = t[1]; n.appendChild(p); });
+    n.hidden = !items.length;
+    n.scrollIntoView({ block: "nearest" });
+  }
   // Every call to the server goes through here and is timed from the click; a wait the person can
   // feel comes back as a note naming its slow steps. syncSoon nobody waits for, so it has no limit.
   var WAITED = { previewEntry: "預覽", saveEntry: "寫入", changeEntry: "修改", saveRecord: "寫入紀錄" };
@@ -102,15 +150,17 @@ function client_() {
   // The list, week grid, hours and 待處理 after a save, swapped in when they come.
   function refresh(done) {
     server("viewParts", [], function (r) {
-      var doc = new DOMParser().parseFromString(r.html, "text/html");
+      var doc = new DOMParser().parseFromString(r.html, "text/html"), wk = document.querySelector(".week"), day = wk && wk.getAttribute("data-sel");
       each("[data-live]", function (x) {
         var fresh = doc.querySelector('[data-live="' + x.getAttribute("data-live") + '"]');
         if (fresh && x.open) fresh.open = true; // an opened 每週固定 stays open
         if (fresh) x.replaceWith(fresh);
       });
+      var again = day && document.querySelector('[data-pick="' + day + '"]'); // the day picked on the phone stays picked
+      if (again) again.click();
       if (done) done();
     }, function () {
-      out.appendChild(Object.assign(document.createElement("li"), { className: "error", textContent: "清單沒有自動更新，請重新整理頁面" }));
+      note([["error", "清單沒有自動更新，請重新整理頁面"]]); // at the top: the form's own line is in a closed dialog
     });
   }
   // The calendar after a save, in the background: the line fills in when it is done.
@@ -191,26 +241,30 @@ function client_() {
     if (!t) return;
     if (t.hasAttribute("data-event")) {
       var q = t.getAttribute("data-event").split("|");
-      show([["muted", "處理中…"]]);
+      note([["muted", "處理中…"]]);
       return server("saveRecord", [{ kind: "event", code: q[0], how: q[1] }], function (r) {
-        if (r.error) return show([["", r.error]]);
-        show([["", r.done]]);
+        if (r.error) return note([["", r.error]]);
+        note([["", r.done]]);
         refresh();
         sync();
-      }, function (err) { show([["", "失敗：" + err.message]]); });
+      }, function (err) { note([["", "失敗：" + err.message]]); });
     }
-    if (t.hasAttribute("data-reload")) { show([["muted", "重新讀取中…"]]); return refresh(); }
+    // The line must end: "重新讀取中…" with nothing to replace it read as a page stuck loading (2026-11-17).
+    if (t.hasAttribute("data-reload")) { note([["muted", "重新讀取中…"]]); return refresh(function () { note([["", "已重新讀取"]]); }); }
     if (t.hasAttribute("data-open")) {
       var tool = document.querySelector("[data-live=" + t.getAttribute("data-open") + "]");
-      if (tool) { tool.open = true; tool.scrollIntoView({ block: "center" }); }
+      if (tool) { showTabOf(tool); tool.open = true; tool.scrollIntoView({ block: "center" }); }
       return;
     }
     var p = t.getAttribute("data-book").split("|"), pick = el("b-id");
     var o = pick && Array.prototype.filter.call(pick.options, function (x) { return x.value === p[0]; })[0];
     if (!o || o.getAttribute("data-actions").split(",").indexOf(p[1]) < 0) {
-      return show([["", "這筆現在不能" + p[1] + "（正在處理或狀態已變），請重新整理"]]);
+      return note([["", "這筆現在不能" + p[1] + "（正在處理或狀態已變），請重新整理"]]);
     }
+    // 核准／婉拒 only picks the action; 寫入 in the form decides. Say so at the top, then go to the form.
+    note([["", "已選好「" + p[1] + "」，到下方表單按「寫入」才會生效"]]);
     var box = document.querySelector("[data-live=tool-booking]");
+    showTabOf(box);
     box.open = true;
     pick.value = p[0];
     bookingLayout();
@@ -227,7 +281,7 @@ function client_() {
       server("changeEntry", [f], function (r) {
         if (r.error) { el("e-out").textContent = r.error; return; }
         dlg.close();
-        show([["", r.done]].concat(r.warnings.map(function (w) { return ["", "注意：" + w]; })));
+        note([["", r.done]].concat(r.warnings.map(function (w) { return ["", "注意：" + w]; })));
         refresh();
         sync();
       }, function (err) { el("e-out").textContent = "失敗：" + err.message; });
@@ -244,6 +298,8 @@ function client_() {
       return f;
     },
     fixed: function () { return { action: "add", item: val("x-item"), monthly: val("x-monthly"), from: ym("x-from") }; },
+    self: function () { return { mood: val("s-mood"), energy: val("s-energy") }; },
+    wealth: function () { return { paste: val("v-paste") }; },
     confirm: function () { return { key: val("c-key"), how: val("c-how"), end: hm("c-end") }; },
     booking: function () {
       var a = val("b-action");
