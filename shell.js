@@ -15,7 +15,23 @@ var Shell = (function () {
     return { token: token, email: p[1] };
   }
   function saveSession(store, token) { store.setItem(KEY, token); }
-  function clearSession(store) { try { store.removeItem(KEY); } catch (e) {} }
+  function clearSession(store) { try { store.removeItem(KEY); store.removeItem(VIEW_KEY); } catch (e) {} }
+
+  // The last page the server answered, kept so the next visit shows it at once while the new one is
+  // asked for (the server takes about 5 s to build the page; 2026-11-17). It holds no wealth amounts
+  // (they are fetched on demand), and signing out or a dead session clears it with the token.
+  var VIEW_KEY = "console.view", VIEW_MAX_MS = 24 * 3600 * 1000;
+  function saveView(store, html, now) {
+    try { store.setItem(VIEW_KEY, JSON.stringify({ at: now, html: String(html) })); } catch (e) {}
+  }
+  function readView(store, now) {
+    try {
+      var v = JSON.parse(store.getItem(VIEW_KEY) || "null");
+      if (v && typeof v.html === "string" && v.html && now - v.at >= 0 && now - v.at < VIEW_MAX_MS) return v;
+    } catch (e) {}
+    try { store.removeItem(VIEW_KEY); } catch (e) {}
+    return null;
+  }
 
   // text/plain keeps the POST "simple" (no CORS preflight), as the booking pages do.
   function request(action, token, args) {
@@ -55,7 +71,8 @@ var Shell = (function () {
     });
   }
 
-  return { KEY: KEY, readSession: readSession, saveSession: saveSession, clearSession: clearSession,
+  return { KEY: KEY, VIEW_KEY: VIEW_KEY, saveView: saveView, readView: readView,
+           readSession: readSession, saveSession: saveSession, clearSession: clearSession,
            request: request, loginRequest: loginRequest, answer: answer, parts: parts };
 })();
 
@@ -105,19 +122,28 @@ if (typeof document !== "undefined" && typeof window !== "undefined" && window.C
     var s = Shell.readSession(store, Date.now());
     if (!s) return signedOut();
     el("signin").hidden = true; el("app").hidden = false; el("session").hidden = false; el("who").textContent = s.email;
-    say("讀取中…");
+    // The last page, shown at once but not wired (client.js has not run): it is for reading only, and the
+    // status line says so until the fresh one replaces it.
+    var old = Shell.readView(store, Date.now()), started = Date.now(), seen = !!old;
+    if (old) show(Shell.parts(new DOMParser().parseFromString(old.html, "text/html")));
+    var tick = setInterval(function () {
+      say((seen ? "顯示的是上次資料，更新中… 已 " : "讀取中… 已 ") + Math.round((Date.now() - started) / 1000) + " 秒");
+    }, 1000);
+    say(seen ? "顯示的是上次資料，更新中…" : "讀取中…");
     fetch(cfg.api, Shell.request("viewParts", s.token, []))
       .then(function (r) { return r.text(); })
       .then(function (t) {
+        clearInterval(tick);
         var a = Shell.answer(t);
         if (a.bad) return signedOut("請重新登入");
-        if (a.error) return say("讀取失敗：" + a.error, "error");
+        if (a.error) return say((seen ? "更新失敗，顯示的是上次資料：" : "讀取失敗：") + a.error, "error");
+        Shell.saveView(store, a.result.html, Date.now());
         show(Shell.parts(new DOMParser().parseFromString(a.result.html, "text/html")));
         say("");
         // Once per page load (signing in reloads the page), so its document-level listeners are added once.
         if (window.runConsoleClient) window.runConsoleClient();
       })
-      .catch(function () { say("連不上中控台，請稍後再試", "error"); });
+      .catch(function () { clearInterval(tick); say(seen ? "連不上中控台，顯示的是上次資料" : "連不上中控台，請稍後再試", "error"); });
   }
   function onCredential(resp) {
     say("登入中…");
