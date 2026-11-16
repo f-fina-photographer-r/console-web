@@ -304,7 +304,8 @@ function client_() {
     booking: function () {
       var a = val("b-action");
       return { id: val("b-id"), action: a, travelFee: a === "核准" ? val("b-travelFee") : "", adjusted: a === "核准" ? val("b-adjusted") : "",
-               adjustReason: a === "核准" ? val("b-adjustReason") : "", deliveryUrl: a === "已交件" ? val("b-deliveryUrl") : "" };
+               adjustReason: a === "核准" ? val("b-adjustReason") : "", declineNote: a === "婉拒" ? val("b-declineNote") : "",
+               deliveryUrl: a === "已交件" ? val("b-deliveryUrl") : "" };
     },
     settings: function () {
       return { taxRate: val("g-taxRate"), hourlyFloor: val("g-hourlyFloor"), weeklyHoursLimit: val("g-weeklyHoursLimit"),
