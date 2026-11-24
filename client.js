@@ -41,6 +41,15 @@ function client_() {
     each("[data-panel]", function (p) { p.hidden = p.getAttribute("data-panel") !== name; });
     each("[data-tab]", function (b) { if (b.getAttribute("data-tab") === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   }
+  // 本週 / 下週 of the week panel: asks the server for that range; it survives every later refresh.
+  var weekRange = "this", rangeChanged = false;
+  document.addEventListener("click", function (e) {
+    var r = e.target.closest && e.target.closest("[data-range]");
+    if (!r || r.getAttribute("data-range") === weekRange) return;
+    weekRange = r.getAttribute("data-range");
+    rangeChanged = true; // the day picked on the phone belonged to the other week
+    refresh();
+  });
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-pick]");
     if (!b) return;
@@ -149,8 +158,9 @@ function client_() {
   }
   // The list, week grid, hours and 待處理 after a save, swapped in when they come.
   function refresh(done) {
-    server("viewParts", [], function (r) {
-      var doc = new DOMParser().parseFromString(r.html, "text/html"), wk = document.querySelector(".week"), day = wk && wk.getAttribute("data-sel");
+    server("viewParts", [weekRange], function (r) {
+      var doc = new DOMParser().parseFromString(r.html, "text/html"), wk = document.querySelector(".week"), day = !rangeChanged && wk && wk.getAttribute("data-sel");
+      rangeChanged = false;
       each("[data-live]", function (x) {
         var fresh = doc.querySelector('[data-live="' + x.getAttribute("data-live") + '"]');
         if (fresh && x.open) fresh.open = true; // an opened 每週固定 stays open
