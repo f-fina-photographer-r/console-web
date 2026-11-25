@@ -53,10 +53,10 @@ function client_() {
     rangeChanged = true; // the day picked on the phone belonged to the other week
     var h = Object.keys(HASHES).filter(function (k) { return HASHES[k] === weekRange; })[0];
     try { history.replaceState(null, "", "#" + h); } catch (err) { /* a framed page may refuse; the range still holds until reload */ }
-    refresh();
+    refresh(null, true);
   });
   // Opened on #nextweek / #month / #nextmonth: the page came in as 本週, so ask for the range from the hash.
-  if (fromHash !== "this") setTimeout(function () { weekRange = fromHash; rangeChanged = true; refresh(); }, 0);
+  if (fromHash !== "this") setTimeout(function () { weekRange = fromHash; rangeChanged = true; refresh(null, true); }, 0);
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-pick]");
     if (!b) return;
@@ -164,12 +164,15 @@ function client_() {
     server(name, [f], done, fail);
   }
   // The list, week grid, hours and 待處理 after a save, swapped in when they come.
-  function refresh(done) {
-    server("viewParts", [[weekRange]], function (r) {
+  // A switch of range asks for the week panel only (`only`): the server then skips the reads the panel does not
+  // show (接案評分, 紀錄, 推估, 東海活動), which were most of the wait (2026-11-25, 切範圍特別慢).
+  function refresh(done, only) {
+    server("viewParts", [only ? [weekRange, "range"] : [weekRange]], function (r) {
       var doc = new DOMParser().parseFromString(r.html, "text/html"), wk = document.querySelector(".week"), day = !rangeChanged && wk && wk.getAttribute("data-sel");
       var kept = rangeChanged ? [] : [].map.call(document.querySelectorAll("[data-seg][open]"), function (s) { return s.getAttribute("data-seg"); });
       rangeChanged = false;
       each("[data-live]", function (x) {
+        if (only && !/^(week|hours)$/.test(x.getAttribute("data-live"))) return;
         var fresh = doc.querySelector('[data-live="' + x.getAttribute("data-live") + '"]');
         if (fresh && x.open) fresh.open = true; // an opened 每週固定 stays open
         if (fresh) x.replaceWith(fresh);
