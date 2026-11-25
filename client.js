@@ -53,10 +53,12 @@ function client_() {
     rangeChanged = true; // the day picked on the phone belonged to the other week
     var h = Object.keys(HASHES).filter(function (k) { return HASHES[k] === weekRange; })[0];
     try { history.replaceState(null, "", "#" + h); } catch (err) { /* a framed page may refuse; the range still holds until reload */ }
+    putMemo(weekRange); // shown at once when kept; the answer below corrects it
     refresh(null, true);
   });
   // Opened on #nextweek / #month / #nextmonth: the page came in as 本週, so ask for the range from the hash.
   if (fromHash !== "this") setTimeout(function () { weekRange = fromHash; rangeChanged = true; refresh(null, true); }, 0);
+  setTimeout(prefetch, 3000);
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-pick]");
     if (!b) return;
@@ -163,13 +165,47 @@ function client_() {
     show([["muted", "處理中…"]]);
     server(name, [f], done, fail);
   }
+  // The week panel and hours card of each range, kept once the server has answered it: a click on a range shows the
+  // kept one at once and the server's answer corrects it a moment later (2026-11-25, 切換仍慢: a call costs about 2 s of
+  // Apps Script round trip however little it reads). A full refresh, after a save, throws them away.
+  var memo = {}, memoGen = 0;
+  function keep(range, doc) {
+    var m = {};
+    ["week", "hours"].forEach(function (n) { m[n] = doc.querySelector('[data-live="' + n + '"]'); });
+    if (m.week && m.hours) memo[range] = m;
+  }
+  function putMemo(range) {
+    var m = memo[range];
+    if (!m) return false;
+    ["week", "hours"].forEach(function (n) {
+      var x = document.querySelector('[data-live="' + n + '"]');
+      if (x) x.replaceWith(m[n].cloneNode(true));
+    });
+    return true;
+  }
+  // The four ranges asked for in the background once the page has settled, one after the other, so even a first click is instant.
+  function prefetch() {
+    var gen = memoGen, left = ["this", "next", "month", "nextmonth"].filter(function (r) { return !memo[r]; });
+    (function next() {
+      var r = left.shift();
+      if (!r || gen !== memoGen) return;
+      server("viewParts", [[r, "range"]], function (res) {
+        if (gen === memoGen) keep(r, new DOMParser().parseFromString(res.html, "text/html"));
+        next();
+      }, function () { /* a failed background ask is only a click that waits */ });
+    })();
+  }
   // The list, week grid, hours and 待處理 after a save, swapped in when they come.
   // A switch of range asks for the week panel only (`only`): the server then skips the reads the panel does not
   // show (接案評分, 紀錄, 推估, 東海活動), which were most of the wait (2026-11-25, 切範圍特別慢).
   function refresh(done, only) {
-    server("viewParts", [only ? [weekRange, "range"] : [weekRange]], function (r) {
+    var asked = weekRange;
+    if (!only) { memo = {}; memoGen++; } // a save changed the page: nothing kept before it is true any more
+    server("viewParts", [only ? [asked, "range"] : [asked]], function (r) {
       var doc = new DOMParser().parseFromString(r.html, "text/html"), wk = document.querySelector(".week"), day = !rangeChanged && wk && wk.getAttribute("data-sel");
       var kept = rangeChanged ? [] : [].map.call(document.querySelectorAll("[data-seg][open]"), function (s) { return s.getAttribute("data-seg"); });
+      if (only) keep(asked, doc);
+      if (only && asked !== weekRange) return; // the person has moved on to another range: this answer is kept, not shown
       rangeChanged = false;
       each("[data-live]", function (x) {
         if (only && !/^(week|hours)$/.test(x.getAttribute("data-live"))) return;
