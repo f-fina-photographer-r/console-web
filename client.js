@@ -165,7 +165,7 @@ function client_() {
   }
   // The list, week grid, hours and 待處理 after a save, swapped in when they come.
   function refresh(done) {
-    server("viewParts", [weekRange], function (r) {
+    server("viewParts", [[weekRange]], function (r) {
       var doc = new DOMParser().parseFromString(r.html, "text/html"), wk = document.querySelector(".week"), day = !rangeChanged && wk && wk.getAttribute("data-sel");
       var kept = rangeChanged ? [] : [].map.call(document.querySelectorAll("[data-seg][open]"), function (s) { return s.getAttribute("data-seg"); });
       rangeChanged = false;
