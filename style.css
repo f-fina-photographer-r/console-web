@@ -31,7 +31,7 @@
   --fs-xl: 2rem;
   --lh: 1.8;
   --lh-tight: 1.4;
-  --measure: 40em; /* about 40 Chinese characters a line */
+  --measure: 40rem; /* about 40 Chinese characters a line; rem, not em, so a block with a bigger or smaller font is still as wide as the column */
   /* Spacing is whole steps of 8px; blocks are 32px apart inside a section, 64px between sections. */
   --space: 8px;
   --group: calc(var(--space) * 4);
@@ -118,7 +118,7 @@ section { margin: 0 0 var(--block); }
 .home .wordmark .logo { animation: fade-in var(--dur-2) var(--ease) both; }
 @keyframes fade-in { from { opacity: 0; } }
 /* Below the picture, never over it (使用者 2026-11-04: the text covered the photo). */
-.hero-copy { max-width: 36rem; padding: calc(var(--space) * 2) calc(var(--space) * 3); }
+.hero-copy { max-width: 36rem; margin-inline: auto; text-align: center; padding: calc(var(--space) * 2) calc(var(--space) * 3); }  /* centred like every other block (2026-11-18 rule) */
 .hero-copy h1 { margin: 0 0 var(--space); }
 .hero-text .hero-copy { padding: var(--block) calc(var(--space) * 2); }
 
@@ -257,6 +257,7 @@ dialog button { font: inherit; margin: var(--space); color: var(--text); backgro
 .progress li[aria-current] { color: var(--on-accent); background: var(--accent); border-color: var(--accent); }
 .todo { color: var(--text); letter-spacing: 0.05em; }
 .card.booking, .cancel { text-align: left; margin: calc(var(--space) * 3) 0; }
+#status-app { max-width: var(--measure); margin-inline: auto; }  /* the status page's blocks sit in the centred column */
 #status-app h2 { text-align: left; }
 
 /* Booking form waits for the backend; say so instead of showing a blank page. */

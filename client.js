@@ -42,14 +42,21 @@ function client_() {
     each("[data-tab]", function (b) { if (b.getAttribute("data-tab") === name) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   }
   // 本週 / 下週 of the week panel: asks the server for that range; it survives every later refresh.
-  var weekRange = "this", rangeChanged = false;
+  // 本月 / 下個月 too. The range is kept in the URL hash (#week, #nextweek, #month, #nextmonth); only
+  // those four are read, anything else is 本週. A reload starts from the hash.
+  var HASHES = { week: "this", nextweek: "next", month: "month", nextmonth: "nextmonth" }, weekRange = "this", rangeChanged = false;
+  var hash = typeof location !== "undefined" ? String(location.hash).slice(1) : "", fromHash = HASHES.hasOwnProperty(hash) ? HASHES[hash] : "this";
   document.addEventListener("click", function (e) {
     var r = e.target.closest && e.target.closest("[data-range]");
     if (!r || r.getAttribute("data-range") === weekRange) return;
     weekRange = r.getAttribute("data-range");
     rangeChanged = true; // the day picked on the phone belonged to the other week
+    var h = Object.keys(HASHES).filter(function (k) { return HASHES[k] === weekRange; })[0];
+    try { history.replaceState(null, "", "#" + h); } catch (err) { /* a framed page may refuse; the range still holds until reload */ }
     refresh();
   });
+  // Opened on #nextweek / #month / #nextmonth: the page came in as 本週, so ask for the range from the hash.
+  if (fromHash !== "this") setTimeout(function () { weekRange = fromHash; rangeChanged = true; refresh(); }, 0);
   document.addEventListener("click", function (e) {
     var b = e.target.closest && e.target.closest("[data-pick]");
     if (!b) return;
@@ -160,12 +167,15 @@ function client_() {
   function refresh(done) {
     server("viewParts", [weekRange], function (r) {
       var doc = new DOMParser().parseFromString(r.html, "text/html"), wk = document.querySelector(".week"), day = !rangeChanged && wk && wk.getAttribute("data-sel");
+      var kept = rangeChanged ? [] : [].map.call(document.querySelectorAll("[data-seg][open]"), function (s) { return s.getAttribute("data-seg"); });
       rangeChanged = false;
       each("[data-live]", function (x) {
         var fresh = doc.querySelector('[data-live="' + x.getAttribute("data-live") + '"]');
         if (fresh && x.open) fresh.open = true; // an opened 每週固定 stays open
         if (fresh) x.replaceWith(fresh);
       });
+      // A week folded or opened in the month list stays as the user left it (a switch of range starts over).
+      if (kept.length) each("[data-seg]", function (s) { s.open = kept.indexOf(s.getAttribute("data-seg")) >= 0; });
       var again = day && document.querySelector('[data-pick="' + day + '"]'); // the day picked on the phone stays picked
       if (again) again.click();
       if (done) done();
