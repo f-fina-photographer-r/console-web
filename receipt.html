@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<!-- Everything happens in this tab: no request leaves the page, so what is typed here (client names,
+     meeting places) is never sent or stored anywhere. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' blob: data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>收據產生器</title>
+<link rel="stylesheet" href="receipt.css">
+</head>
+<body>
+<main>
+  <header><h1>收據產生器</h1><a href="index.html">回中控台</a></header>
+  <p class="note">只在這個分頁裡算圖，內容不會送出也不會存下；重新整理就清空。</p>
+  <form id="form" autocomplete="off">
+    <fieldset>
+      <legend>頁尾</legend>
+      <label>客人名<input name="client" required></label>
+      <label>日期<input name="date" type="date" required></label>
+    </fieldset>
+    <fieldset>
+      <legend>第一頁</legend>
+      <label>拍攝時間<textarea name="拍攝時間" rows="2"></textarea></label>
+      <label>當日會合<textarea name="當日會合" rows="2"></textarea></label>
+      <label>拍攝時長<textarea name="拍攝時長" rows="2"></textarea></label>
+      <label>被攝人數<textarea name="被攝人數" rows="2" placeholder="例：3人（第一個數字用來均攤）"></textarea></label>
+      <div class="pay">
+        <span class="legend">關於付款（金額填數字就會自動加總、檢查）</span>
+        <div id="items"></div>
+        <button type="button" id="add">加一列</button>
+        <label class="check"><input type="checkbox" name="split">合計依被攝人數均攤</label>
+        <label>付款補充<textarea name="付款補充" rows="2"></textarea></label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>第二頁（太長會自動縮字，再不夠就接到第三頁）</legend>
+      <label>參考資訊<textarea name="參考資訊" rows="3"></textarea></label>
+      <label>挑照方式<textarea name="挑照方式" rows="3"></textarea></label>
+      <label>返照相關<textarea name="返照相關" rows="3"></textarea></label>
+      <label>其他事項<textarea name="其他事項" rows="4"></textarea></label>
+    </fieldset>
+    <button type="submit">產生收據圖</button>
+  </form>
+  <div id="messages" role="status"></div>
+  <section id="output"></section>
+</main>
+<script src="receipt-chars.js"></script>
+<script src="receipt.js"></script>
+</body>
+</html>
