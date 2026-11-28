@@ -2,26 +2,31 @@
 @font-face { font-family: "ReceiptSerif"; font-weight: 400; font-display: block; src: url("fonts/receipt-400.woff2") format("woff2"); }
 @font-face { font-family: "ReceiptSerif"; font-weight: 700; font-display: block; src: url("fonts/receipt-700.woff2") format("woff2"); }
 
-body { margin: 0; background: #fff; color: #222; font-family: "ReceiptSerif", "Noto Serif TC", serif; }
+/* Colours come from the site's palette (style.css, dark by default) so this page matches the console;
+   only the receipt image itself keeps its own light colours. */
+body { margin: 0; background: var(--bg); color: var(--text); font-family: "ReceiptSerif", var(--serif); }
 main { max-width: 760px; margin: 0 auto; padding: 16px; }
 header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
 h1 { font-size: 1.4rem; margin: 0; }
-a { color: #222; }
-.note, .legend { color: #666; font-size: .9rem; }
-fieldset { border: 1px solid #ccc; margin: 0 0 16px; padding: 12px; }
+.note, .legend { color: var(--muted); font-size: .9rem; }
+fieldset { border: 1px solid var(--rail); margin: 0 0 16px; padding: 12px; }
 legend { padding: 0 6px; }
 label { display: block; margin: 0 0 10px; }
-input, textarea { display: block; box-sizing: border-box; width: 100%; margin-top: 4px; padding: 6px; font: inherit; border: 1px solid #aaa; }
+input, textarea { display: block; box-sizing: border-box; width: 100%; margin-top: 4px; padding: 6px; font: inherit;
+  background: var(--card); color: var(--text); border: 1px solid var(--rail); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
+input:focus-visible, textarea:focus-visible, button:focus-visible, a:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 label.check { display: flex; gap: 8px; align-items: center; }
-label.check input { width: auto; margin: 0; }
+label.check input { width: auto; margin: 0; accent-color: var(--accent); }
 .row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 8px; margin: 6px 0; }
 .row input { margin: 0; }
-button { font: inherit; padding: 6px 14px; border: 1px solid #222; background: #fff; cursor: pointer; }
-button[type="submit"] { background: #222; color: #fff; }
+button { font: inherit; padding: 6px 14px; border: 1px solid var(--accent); background: none; color: var(--link); cursor: pointer; }
+button:hover { background: var(--accent); color: var(--on-accent); }
+button[type="submit"] { background: var(--accent); color: var(--on-accent); }
 #messages p { margin: 8px 0; }
-#messages .error { color: #a00; }
-#messages .warn { color: #7a5a00; }
+#messages .error { color: var(--error); }
+#messages .warn { color: var(--gold); }
 #output { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
 #output figure { margin: 0; }
-#output img { width: 100%; border: 1px solid #ddd; }
+#output img { width: 100%; border: 1px solid var(--band); }
 #output figcaption { margin-top: 4px; }
